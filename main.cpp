@@ -71,7 +71,5 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	}
 	delete[] argv;
 
-	LocalFree(szArglist);
-
 	return 0;
 }
